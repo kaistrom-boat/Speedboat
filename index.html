@@ -102,6 +102,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stromboat">
 <meta property="og:image" content="/stromboat-hero.webp">
+<style>
+.sb-code{margin:18px 0;border:1px solid rgba(127,127,127,.3);border-radius:12px;overflow:hidden}
+.sb-code__bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:13px;opacity:.9;border-bottom:1px solid rgba(127,127,127,.25)}
+.sb-code pre{margin:0;padding:12px;overflow-x:auto;font-size:12px;line-height:1.5;white-space:pre}
+.sb-copy,#sbCheck{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer}
+.sb-check{margin:22px 0}.sb-check__row{display:flex;gap:8px}
+#sbAddr{flex:1;min-width:0;font:inherit;font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit}
+</style>
 </head>
   <body>
     <div class="page" id="top">
@@ -151,7 +159,7 @@
           <div class="head">
             <p class="head__eyebrow">Article II</p>
             <h2>Anatomy of a Stromboat.</h2>
-            <p class="head__sub">Each token is a unique 1-of-1 drawing. No two seeds draw the same boat.</p>
+            <p class="head__sub">Each token draws its sea and hull on-chain from its number. Series I is painted from nine pixel artworks, so boats of the same sea and hull share a picture.</p>
           </div>
           <div class="pair">
             <figure class="x-token">
@@ -242,41 +250,64 @@
 
         <section class="section" id="mint" data-nav="Mint">
           <div class="head">
-            <p class="head__eyebrow">Article VI · Mint · Coming soon</p>
-            <h2>Only agents may mint.</h2>
-            <p class="head__sub">Stromboat will be minted only by Binance Agentic Wallets holding an Agent ID. Ordinary wallets will be turned away. Max 4 per Agent ID.</p>
+            <p class="head__eyebrow">Article VI · Mint</p>
+            <h2>Built for agents.</h2>
+            <p class="head__sub">Stromboat is meant to be minted by Binance Agentic Wallets with one call. The contract turns away other contracts, and caps every wallet at 4.</p>
           </div>
           <section class="stats" aria-label="Mint details">
-            <div class="stat"><span class="stat__fig">3,333</span><span class="stat__label">Supply</span></div>
-            <div class="stat"><span class="stat__fig">4</span><span class="stat__label">Max per Agent ID</span></div>
-            <div class="stat"><span class="stat__fig">BNB Chain</span><span class="stat__label">Network</span></div>
+            <div class="stat"><span class="stat__fig"><span id="sbMinted">0</span> / 3,333</span><span class="stat__label">Minted</span></div>
+            <div class="stat"><span class="stat__fig" id="sbLeft">3,333</span><span class="stat__label">Remaining</span></div>
+            <div class="stat"><span class="stat__fig" id="sbPrice">…</span><span class="stat__label">Price per boat</span></div>
           </section>
-          <p><span class="chip">Status: Coming soon</span> <span class="pill">Price: read live from the contract at launch</span></p>
-          <p class="fineprint">Your wallet shows the exact value before you sign.</p>
+          <p><span class="chip" id="sbStatus">Status: Reading contract…</span> <span class="pill">Max 4 per wallet</span></p>
           <div class="steps">
             <article class="step">
               <div class="step__intro"><p class="step__num">01</p></div>
               <div>
-                <h3>Hold an Agent ID.</h3>
-                <p>Claim it in the Binance Wallet app under your Agentic Wallet.</p>
+                <h3>Use your Agentic Wallet.</h3>
+                <p>Set it up in the Binance Wallet app. Calls from contracts are rejected on-chain.</p>
               </div>
             </article>
             <article class="step">
               <div class="step__intro"><p class="step__num">02</p></div>
               <div>
-                <h3>Wait for launch.</h3>
-                <p>The official mint details will be published here and on our X account when the contract is live.</p>
+                <h3>Call mint(quantity).</h3>
+                <p>Quantity 1 to 4. Read <code>currentPrice()</code> and send exactly price × quantity. Your wallet shows the value before you sign.</p>
               </div>
             </article>
             <article class="step">
               <div class="step__intro"><p class="step__num">03</p></div>
               <div>
-                <h3>Your storm is chosen.</h3>
-                <p>The block decides the seed, the seed decides the hull, sail and sea.</p>
+                <h3>Your storm is fixed.</h3>
+                <p>Each token number decides its sea and hull on-chain. Nothing is curated after the fact.</p>
               </div>
             </article>
           </div>
-          <p class="fineprint">Never trust a mint link or contract address sent in DMs or replies. Only use the one published on this page at launch.</p>
+          <div class="sb-code">
+            <div class="sb-code__bar"><span>Prompt for your agent</span><button type="button" class="sb-copy" data-copy="sbPrompt">Copy</button></div>
+<pre id="sbPrompt">Mint one Stromboat on BNB Chain (chain id 56).
+Contract: 0xCeF18032C668A6bb5c2067aC74aA3c6E009553da
+Call mint(uint256) with quantity 1, calldata
+0xa0712d680000000000000000000000000000000000000000000000000000000000000001
+Value: read currentPrice() on the contract and send exactly that.</pre>
+          </div>
+          <div class="sb-code">
+            <div class="sb-code__bar"><span>baw CLI</span><button type="button" class="sb-copy" data-copy="sbCli">Copy</button></div>
+<pre id="sbCli">baw contract-call preview --binanceChainId 56 \
+  --from &lt;your agentic wallet&gt; \
+  --to 0xCeF18032C668A6bb5c2067aC74aA3c6E009553da \
+  --value &lt;currentPrice() in wei&gt; \
+  --inputData 0xa0712d680000000000000000000000000000000000000000000000000000000000000001 --json
+
+baw contract-call execute --requestId &lt;requestId&gt; --json</pre>
+          </div>
+          <p class="fineprint">For 2, 3 or 4 boats, change the last digit of the calldata to 2, 3 or 4 and multiply the value.</p>
+          <div class="sb-check">
+            <p class="head__eyebrow">Check a wallet</p>
+            <div class="sb-check__row"><input id="sbAddr" placeholder="0x… wallet address" autocomplete="off"><button type="button" id="sbCheck">Check</button></div>
+            <p class="fineprint" id="sbCheckOut"></p>
+          </div>
+          <p class="fineprint">Official contract: <a href="https://bscscan.com/address/0xCeF18032C668A6bb5c2067aC74aA3c6E009553da" target="_blank" rel="noopener">0xCeF1…53da ↗</a>. Never trust a mint link or address sent in DMs or replies.</p>
         </section>
 
         <section class="section" id="notes" data-nav="Notes">
@@ -291,7 +322,7 @@
             </details>
             <details>
               <summary>What decides my boat?</summary>
-              <p>A seed picks the hull, sail color, sea and storm strength. The same seed always draws the same boat.</p>
+              <p>The token number. The contract hashes it to pick the sea and the hull, so the same number always draws the same boat.</p>
             </details>
             <details>
               <summary>Where does the art live?</summary>
@@ -503,6 +534,18 @@
         }
       })();
     </script>
+  <script>
+(function(){var C="0xCeF18032C668A6bb5c2067aC74aA3c6E009553da",R=["https://bsc-rpc.publicnode.com","https://bsc-dataseed.bnbchain.org","https://bsc.drpc.org","https://binance.llamarpc.com"];
+function call(d){var i=0;function t(){return fetch(R[i],{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:C,data:d},"latest"]})}).then(function(r){return r.json()}).then(function(j){if(!j.result)throw 0;return BigInt(j.result)}).catch(function(e){if(++i<R.length)return t();throw e})}return t()}
+function bnb(w){var s=w.toString().padStart(19,"0"),a=s.slice(0,-18),b=s.slice(-18).replace(/0+$/,"");return a+(b?"."+b:"")+" BNB"}
+function $(i){return document.getElementById(i)}
+function load(){Promise.all([call("0xa2309ff8"),call("0x9d1b464a"),call("0x24bbd049")]).then(function(v){var m=Number(v[0]);$("sbMinted").textContent=m.toLocaleString("en");$("sbLeft").textContent=(3333-m).toLocaleString("en");$("sbPrice").textContent=bnb(v[1]);$("sbStatus").textContent=m>=3333?"Status: Sold out":(v[2]?"Status: Mint open":"Status: Mint not open yet")}).catch(function(){$("sbStatus").textContent="Status: Could not read contract"})}
+load();setInterval(load,30000);
+document.querySelectorAll(".sb-copy").forEach(function(b){b.onclick=function(){var t=$(b.dataset.copy).textContent;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy"},1500)}).catch(function(){var r=document.createRange();r.selectNode($(b.dataset.copy));getSelection().removeAllRanges();getSelection().addRange(r)})}});
+$("sbCheck").onclick=function(){var a=$("sbAddr").value.trim(),o=$("sbCheckOut");if(!/^0x[0-9a-fA-F]{40}$/.test(a)){o.textContent="Enter a full 0x wallet address.";return}o.textContent="Checking…";
+call("0xa6f4a84c"+a.slice(2).toLowerCase().padStart(64,"0")).then(function(n){n=Number(n);o.textContent=n>0?"This wallet can still mint "+n+" of 4.":"This wallet has reached the 4 per wallet limit."}).catch(function(){o.textContent="Could not read the contract. Try again in a moment."})};
+})();
+</script>
   <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js")}</script>
 </body>
 </html>
