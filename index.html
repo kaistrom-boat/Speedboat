@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stromboat · Small boats. Endless storms.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <style>
+      .x-def { font: var(--type-small); color: var(--hero-text-muted); }
+      .x-def i { font-style: italic; }
+      .hero h1 em { font-style: italic; font-weight: var(--weight-regular); }
+
+      .x-storm { margin: 0; padding: 20px; border-radius: var(--r-m); background: var(--fill-tertiary); display: grid; gap: 16px; }
+      .x-storm canvas, .x-gallery canvas {
+        display: block; width: 100%; height: auto; aspect-ratio: 8 / 5;
+        border-radius: var(--r-s); image-rendering: pixelated; background: var(--hero-surface);
+      }
+      .x-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+      .x-controls .btn { min-height: var(--tap); cursor: pointer; }
+      .x-controls .btn[aria-pressed="true"] { background: var(--fill-primary); color: var(--text-primary-on); border-color: var(--fill-primary); }
+      .x-wind { display: flex; align-items: center; gap: 10px; font: var(--type-tag); min-height: var(--tap); }
+      .x-wind input { width: 140px; accent-color: var(--text-primary); min-height: var(--tap); }
+      .x-readout { margin-left: auto; font: var(--type-small); color: var(--text-secondary); }
+      .x-readout b { color: var(--text-primary); font-weight: var(--weight-medium); }
+      @media (max-width: 599px) { .x-readout { margin-left: 0; width: 100%; } }
+
+      .x-storm { border: 1px dashed var(--stroke-primary); }
+      .x-storm__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0; font: var(--type-label); }
+      .x-storm__head small { font: var(--type-small); color: var(--text-secondary); }
+      .x-storm canvas { max-width: 640px; justify-self: center; opacity: .92; }
+
+      .x-art { margin: 0 0 14px; }
+      .x-art img, .x-token img, .x-gallery img {
+        display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover;
+        border-radius: var(--r-s); image-rendering: pixelated; background: var(--hero-surface);
+      }
+
+      .x-seas .row { align-items: center; }
+      .x-seas dt { display: flex; align-items: center; gap: 14px; }
+      .x-seas dt img {
+        flex: none; width: 48px; height: 48px; object-fit: cover;
+        border-radius: var(--r-s); image-rendering: pixelated; background: var(--hero-surface);
+      }
+
+      .x-supply {
+        position: fixed; z-index: 21; top: calc(env(safe-area-inset-top, 0px) + 12px); right: var(--gutter);
+        display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 16px;
+        border-radius: var(--r-pill); box-shadow: var(--hark-shadow); font: var(--type-label);
+        background: var(--fill-primary); color: var(--text-primary-on); border: 1px solid var(--stroke-primary);
+      }
+      .x-supply b { font-family: "Geist Mono", monospace; font-weight: var(--weight-regular); }
+      @media (max-width: 1100px) { .x-supply { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); } }
+
+      .x-herostats { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 4px 0; padding: 0; list-style: none; }
+      .x-herostats li { display: grid; gap: 2px; }
+      .x-herostats b { font: var(--type-title); color: var(--hero-text); font-variant-numeric: tabular-nums; }
+      .x-herostats span { font-size: var(--size-small); color: var(--hero-text-muted); }
+
+      .x-token { margin: 0; padding: 16px; border-radius: var(--r-m); background: var(--fill-tertiary); display: grid; gap: 12px; align-content: start; }
+      .x-token figcaption { display: flex; justify-content: space-between; gap: 12px; font: var(--type-label); }
+      .x-token figcaption span { color: var(--text-secondary); font-family: "Geist Mono", monospace; font-weight: var(--weight-regular); }
+      .x-mono { font-family: "Geist Mono", monospace; font-weight: var(--weight-regular); }
+
+      .x-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+      .x-gallery figure {
+        margin: 0; padding: 12px 12px 16px; border-radius: var(--r-m); background: var(--fill-tertiary);
+        transition: box-shadow var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
+      }
+      .x-gallery figure:hover, .x-gallery figure:focus-within {
+        box-shadow: 0 0 0 1px var(--stroke-primary), 0 0 48px color-mix(in srgb, var(--fill-system-orange) 35%, transparent);
+        transform: translateY(-2px);
+      }
+      @media (prefers-reduced-motion: reduce) { .x-gallery figure:hover, .x-gallery figure:focus-within { transform: none; } }
+      .x-gallery figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-top: 12px; font: var(--type-small); color: var(--text-secondary); }
+      .x-gallery figcaption b { display: block; font: var(--type-label); color: var(--text-primary); }
+      @media (max-width: 599px) { .x-gallery { grid-template-columns: minmax(0, 1fr); } }
+
+      .x-faq { max-width: 720px; border-top: 1px solid var(--stroke-primary); }
+      .x-faq details { border-bottom: 1px solid var(--stroke-secondary); }
+      .x-faq summary {
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        min-height: var(--tap); padding: 14px 0; font: var(--type-body-strong); cursor: pointer; list-style: none;
+      }
+      .x-faq summary::-webkit-details-marker { display: none; }
+      .x-faq summary::after { content: "+"; font: var(--type-heading); color: var(--text-secondary); transition: transform var(--dur-quick) var(--ease-out); }
+      .x-faq details[open] summary::after { transform: rotate(45deg); }
+      .x-faq details p { padding: 0 0 18px; color: var(--text-secondary); max-width: 62ch; }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <header class="nav glass" data-auto></header>
+      <p class="x-supply" aria-label="Collection size: 3,333 works"><b>3,333</b> works</p>
+      <main class="main">
+        <section class="hero">
+          <img class="hero__img" src="stromboat-hero.webp" alt="A small sailboat with a lit lantern rides a giant wave under lightning" />
+          <div class="hero__copy">
+            <p class="hero__eyebrow x-def"><b>strom</b> / strɔm / <i>n.</i> a current, a stream; the force that moves water</p>
+            <h1>Small boats.<br /><em>Endless storms.</em></h1>
+            <p class="hero__sub">3,333 generative NFTs. Every Stromboat is one token: one hull, one sail, one lantern, and the storm it was born into, fixed forever by a single seed.</p>
+            <ul class="x-herostats" aria-label="The collection in numbers">
+              <li><b>3,333</b><span>works</span></li>
+              <li><b>4</b><span>hulls</span></li>
+              <li><b>5</b><span>seas</span></li>
+              <li><b>1</b><span>seed each</span></li>
+            </ul>
+            <p class="hero__meta">Series I · Generative</p>
+          </div>
+          <aside class="callout" aria-label="Next step">
+            <p class="callout__head"><span class="hark-mark" data-size="16"></span> Next step</p>
+            <p class="callout__lead"><strong>One little boat, one storm, one seed.</strong> See the featured works.</p>
+            <a class="btn" href="#gallery">See the art</a>
+          </aside>
+        </section>
+
+        <section class="section" id="storm" data-nav="Storm">
+          <div class="head">
+            <p class="head__eyebrow">Article I</p>
+            <h2>Play with a storm.</h2>
+            <p class="head__sub">Each wave looks at the wave before it and decides: rise or fall. Turn the wind up and see.</p>
+          </div>
+          <figure class="x-storm">
+            <p class="x-storm__head"><span class="chip">Storm preview</span><small>A toy sketch of the weather, not the NFT art.</small></p>
+            <canvas id="storm-canvas" width="192" height="120" role="img" aria-label="Storm preview: layered pixel waves, rain and lightning around a small boat"></canvas>
+            <div class="x-controls">
+              <button type="button" class="btn" id="new-seed">New seed</button>
+              <label class="x-wind" for="wind">Wind <input type="range" id="wind" min="1" max="10" step="1" value="6" /></label>
+              <button type="button" class="btn" id="lightning" aria-pressed="true">Lightning</button>
+              <p class="x-readout" aria-live="polite">Preview seed <b id="seed-no">#001</b> · <span id="seed-hull">Dinghy</span> · <span id="seed-sea">Calm Grey</span></p>
+            </div>
+          </figure>
+        </section>
+
+        <section class="section" id="anatomy" data-nav="Anatomy">
+          <div class="head">
+            <p class="head__eyebrow">Article II</p>
+            <h2>Anatomy of a Stromboat.</h2>
+            <p class="head__sub">Each token is a unique 1-of-1 drawing. No two seeds draw the same boat.</p>
+          </div>
+          <div class="pair">
+            <figure class="x-token">
+              <img src="storm-junk.webp" alt="Stromboat #042: a red-sailed junk in a golden lightning storm" />
+              <figcaption>Stromboat #042 <span>1 of 3,333</span></figcaption>
+            </figure>
+            <div class="breakdown">
+              <dl>
+                <div class="row"><dt>Token ID</dt><dd>#042 of 3,333</dd></div>
+                <div class="row"><dt>Hull</dt><dd>Junk</dd></div>
+                <div class="row"><dt>Sail</dt><dd>Red</dd></div>
+                <div class="row"><dt>Sea <small>Tier</small></dt><dd>Thunder Gold · 8%</dd></div>
+                <div class="row"><dt>Storm strength</dt><dd>8 / 10</dd></div>
+                <div class="row"><dt>Lantern</dt><dd>On</dd></div>
+                <div class="row"><dt>Seed</dt><dd class="x-mono">0xF519F70A</dd></div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="hulls" data-nav="Hulls">
+          <div class="head">
+            <p class="head__eyebrow">Article III</p>
+            <h2>Four kinds of hull.</h2>
+          </div>
+          <div class="cards">
+            <div>
+              <figure class="x-art"><img src="storm-dinghy.webp" alt="A dinghy with a lit lantern on a teal wave under violet lightning" /></figure>
+              <h3>Dinghy</h3>
+              <p class="quote">Small and stubborn.</p>
+              <p>Rides every wave.</p>
+            </div>
+            <div>
+              <figure class="x-art"><img src="storm-junk.webp" alt="A red-sailed junk in a golden lightning storm" /></figure>
+              <h3>Junk</h3>
+              <p class="quote">Battened sails.</p>
+              <p>Built for long nights.</p>
+            </div>
+            <div>
+              <figure class="x-art"><img src="storm-longship.webp" alt="A longship in violet midnight swells" /></figure>
+              <h3>Longship</h3>
+              <p class="quote">Narrow and fast.</p>
+              <p>Cuts through swells.</p>
+            </div>
+            <div>
+              <figure class="x-art"><img src="storm-eye-raft.webp" alt="A lantern raft in the calm eye of a hurricane" /></figure>
+              <h3>Lantern Raft</h3>
+              <p class="quote">Barely a boat.</p>
+              <p>Always glowing.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="seas" data-nav="Seas">
+          <div class="head">
+            <p class="head__eyebrow">Article IV</p>
+            <h2>Five seas.</h2>
+            <p class="head__sub">How often each sea rises from a seed, and roughly how many of the 3,333.</p>
+          </div>
+          <div class="breakdown x-seas">
+            <dl>
+              <div class="row"><dt><img src="storm-calm-grey.webp" alt="" /><span>Calm Grey</span></dt><dd>50% · ~1,667</dd></div>
+              <div class="row"><dt><img src="storm-squall-junk.webp" alt="" /><span>Squall Teal</span></dt><dd>25% · ~833</dd></div>
+              <div class="row"><dt><img src="storm-violet-dinghy.webp" alt="" /><span>Night Violet</span></dt><dd>15% · ~500</dd></div>
+              <div class="row"><dt><img src="storm-gold-longship.webp" alt="" /><span>Thunder Gold</span></dt><dd>8% · ~267</dd></div>
+              <div class="row"><dt><img src="storm-eye-raft.webp" alt="" /><span>Eye of the Storm <small>The sea goes still around the boat</small></span></dt><dd>2% · ~67</dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="section" id="gallery" data-nav="Gallery">
+          <div class="head">
+            <p class="head__eyebrow">Article V</p>
+            <h2>Featured works · 8 of 3,333</h2>
+            <p class="head__sub">Every hull, across all five seas.</p>
+          </div>
+          <div class="x-gallery">
+            <figure tabindex="0"><img src="storm-dinghy.webp" alt="Stromboat #001: a dinghy with a lantern on a teal wave under violet lightning" /><figcaption><span><b>Stromboat #001</b>Dinghy · Squall Teal</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-junk.webp" alt="Stromboat #042: a red-sailed junk in a golden lightning storm" /><figcaption><span><b>Stromboat #042</b>Junk · Thunder Gold</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-longship.webp" alt="Stromboat #888: a longship in violet midnight swells" /><figcaption><span><b>Stromboat #888</b>Longship · Night Violet</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-eye-raft.webp" alt="Stromboat #3333: a lantern raft in the calm eye of a hurricane" /><figcaption><span><b>Stromboat #3333</b>Lantern Raft · Eye of the Storm</span><span class="chip chip--solid">Legendary</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-calm-grey.webp" alt="Stromboat #0007: a fishing dinghy in a calm grey, misty sea" /><figcaption><span><b>Stromboat #0007</b>Dinghy · Calm Grey</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-squall-junk.webp" alt="Stromboat #0215: a teal-sailed junk in a squall with a waterspout" /><figcaption><span><b>Stromboat #0215</b>Junk · Squall Teal</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-violet-dinghy.webp" alt="Stromboat #1402: an orange-sail dinghy under violet aurora and lightning" /><figcaption><span><b>Stromboat #1402</b>Dinghy · Night Violet</span></figcaption></figure>
+            <figure tabindex="0"><img src="storm-gold-longship.webp" alt="Stromboat #2911: a gold dragon longship struck by golden lightning" /><figcaption><span><b>Stromboat #2911</b>Longship · Thunder Gold</span></figcaption></figure>
+          </div>
+        </section>
+
+        <section class="section" id="mint" data-nav="Mint">
+          <div class="head">
+            <p class="head__eyebrow">Article VI · Mint · Coming soon</p>
+            <h2>Only agents may mint.</h2>
+            <p class="head__sub">Stromboat will be minted only by Binance Agentic Wallets holding an Agent ID. Ordinary wallets will be turned away. Max 4 per Agent ID.</p>
+          </div>
+          <section class="stats" aria-label="Mint details">
+            <div class="stat"><span class="stat__fig">3,333</span><span class="stat__label">Supply</span></div>
+            <div class="stat"><span class="stat__fig">4</span><span class="stat__label">Max per Agent ID</span></div>
+            <div class="stat"><span class="stat__fig">BNB Chain</span><span class="stat__label">Network</span></div>
+          </section>
+          <p><span class="chip">Status: Coming soon</span> <span class="pill">Price: read live from the contract at launch</span></p>
+          <p class="fineprint">Your wallet shows the exact value before you sign.</p>
+          <div class="steps">
+            <article class="step">
+              <div class="step__intro"><p class="step__num">01</p></div>
+              <div>
+                <h3>Hold an Agent ID.</h3>
+                <p>Claim it in the Binance Wallet app under your Agentic Wallet.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="step__intro"><p class="step__num">02</p></div>
+              <div>
+                <h3>Wait for launch.</h3>
+                <p>The official mint details will be published here and on our X account when the contract is live.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="step__intro"><p class="step__num">03</p></div>
+              <div>
+                <h3>Your storm is chosen.</h3>
+                <p>The block decides the seed, the seed decides the hull, sail and sea.</p>
+              </div>
+            </article>
+          </div>
+          <p class="fineprint">Never trust a mint link or contract address sent in DMs or replies. Only use the one published on this page at launch.</p>
+        </section>
+
+        <section class="section" id="notes" data-nav="Notes">
+          <div class="head">
+            <p class="head__eyebrow">Notes</p>
+            <h2>A few honest answers.</h2>
+          </div>
+          <div class="x-faq">
+            <details open>
+              <summary>How many are there?</summary>
+              <p>3,333 in Series I. Each one is a single NFT drawn from its own seed.</p>
+            </details>
+            <details>
+              <summary>What decides my boat?</summary>
+              <p>A seed picks the hull, sail color, sea and storm strength. The same seed always draws the same boat.</p>
+            </details>
+            <details>
+              <summary>Where does the art live?</summary>
+              <p>Each Stromboat is a fixed pixel artwork tied to its seed. The storm preview in Article I is a toy sketch of the weather, not the art.</p>
+            </details>
+            <details>
+              <summary>What comes with it?</summary>
+              <p>An artwork. No token promises, no roadmap.</p>
+            </details>
+          </div>
+        </section>
+      </main>
+      <footer class="foot">
+        <p>STROMBOAT · SERIES I · 3,333</p>
+        <nav aria-label="Back to sections" data-auto></nav>
+        <a class="badge" href="https://hark.com/" target="_blank" rel="noopener"><span class="hark-mark"></span><span>built by hark</span></a>
+      </footer>
+    </div>
+    <script src="hark.js"></script>
+    <script>
+      (function () {
+        var W = 192, H = 120;
+        var HULLS = ["Dinghy", "Junk", "Longship", "Lantern Raft"];
+        var SEAS = [
+          { name: "Calm Grey", p: 0.5, sky: ["#22262d", "#3a4049"], waves: ["#4f5762", "#3e454f", "#2c323a"], foam: "#c9d1d9", rain: "#8a94a0" },
+          { name: "Squall Teal", p: 0.25, sky: ["#0c2226", "#1b3d42"], waves: ["#2f7d7b", "#1f5e5f", "#123f40"], foam: "#bff0e8", rain: "#7fb8b2" },
+          { name: "Night Violet", p: 0.15, sky: ["#100b24", "#261c4a"], waves: ["#5c41a0", "#432e7c", "#2b1d56"], foam: "#ddd0ff", rain: "#9a88d0" },
+          { name: "Thunder Gold", p: 0.08, sky: ["#1a150a", "#3b3013"], waves: ["#9e7c2c", "#71581f", "#4a3a14"], foam: "#ffe8a3", rain: "#c8a95e" },
+          { name: "Eye of the Storm", p: 0.02, sky: ["#0a101d", "#1c2a45"], waves: ["#3b5c84", "#2a4568", "#1a2e4b"], foam: "#e8f1ff", rain: "#7f97b8" }
+        ];
+        var SAILS = ["#efe6d2", "#d9573b", "#e8b84a", "#6fb3c9", "#c46fa0", "#f2f2f2", "#8fc27a"];
+        var SAIL_NAMES = ["Bone", "Ember", "Saffron", "Harbour Blue", "Orchid", "White", "Moss"];
+
+        function rng(seed) {
+          var a = (seed * 2654435761) >>> 0;
+          return function () {
+            a = (a + 0x6d2b79f5) >>> 0;
+            var t = a;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+        function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+        function traits(seed) {
+          var r = rng(seed);
+          var hull = Math.floor(r() * 4);
+          var roll = r(), acc = 0, sea = 0;
+          for (var i = 0; i < SEAS.length; i++) { acc += SEAS[i].p; if (roll < acc) { sea = i; break; } sea = i; }
+          var sailIdx = Math.floor(r() * SAILS.length), sail = SAILS[sailIdx];
+          var strength = 0.45 + r() * 0.55;
+          var layers = [];
+          for (var k = 0; k < 3; k++) layers.push({ f1: 0.03 + r() * 0.03, f2: 0.08 + r() * 0.06, p1: r() * 6.28, p2: r() * 6.28, n: r() * 1000 });
+          var bolt = [];
+          var bx = 20 + r() * (W - 40);
+          for (var j = 0; j < 8; j++) { bolt.push(bx); bx += (r() - 0.5) * 14; }
+          var boltStatic = r() < 0.35;
+          var lantern = hull === 3 ? true : r() < 0.8;
+          return { seed: seed, hull: hull, sea: sea, sail: sail, sailName: SAIL_NAMES[sailIdx], strength: strength, layers: layers, bolt: bolt, boltStatic: boltStatic, lantern: lantern };
+        }
+
+        // Each wave height looks at its neighbour: a smoothed walk layered over two sines.
+        function waveY(L, k, x, t, amp, base, eye) {
+          var walk = 0, prev = 0;
+          var n = Math.sin((x + L.n) * 0.21) * 0.5 + Math.sin((x + L.n) * 0.53 + t * 0.6) * 0.25;
+          walk = prev * 0.6 + n * 0.4;
+          var y = Math.sin(x * L.f1 + L.p1 + t * (0.9 + k * 0.3)) * 0.65 + Math.sin(x * L.f2 + L.p2 - t * (0.6 + k * 0.2)) * 0.3 + walk * 0.35;
+          var a = amp;
+          if (eye) { var d = (x - W * 0.5) / 34; a *= 1 - Math.exp(-d * d); }
+          return base - y * a;
+        }
+
+        function px(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(x, y, w, h); }
+
+        function drawBoat(c, tr, glowPulse) {
+          var wood = "#5b3d22", dark = "#2a1b10", sail = tr.sail, lamp = "#ffd36b";
+          var lx = 0, ly = 0;
+          if (tr.hull === 0) {
+            px(c, 0, -14, 1, 14, dark);
+            for (var i = 0; i < 10; i++) px(c, 1, -13 + i, Math.floor(i * 0.7) + 1, 1, sail);
+            px(c, -7, -1, 15, 1, wood); px(c, -6, 0, 13, 1, wood); px(c, -5, 1, 11, 1, dark);
+            lx = -5; ly = -3;
+          } else if (tr.hull === 1) {
+            px(c, 0, -16, 1, 15, dark);
+            for (var b = 0; b < 3; b++) { px(c, 1, -15 + b * 4, 7 + b, 3, sail); px(c, 1, -12 + b * 4, 7 + b, 1, dark); }
+            px(c, -10, -3, 3, 2, wood); px(c, -10, -1, 21, 1, wood); px(c, -9, 0, 19, 1, wood); px(c, -7, 1, 15, 1, dark);
+            lx = -9; ly = -5;
+          } else if (tr.hull === 2) {
+            px(c, 0, -13, 1, 12, dark); px(c, -4, -12, 9, 6, sail); px(c, -4, -9, 9, 1, "rgba(0,0,0,.25)");
+            px(c, -14, -3, 1, 2, wood); px(c, 14, -3, 1, 2, wood); px(c, -14, -1, 29, 1, wood); px(c, -12, 0, 25, 1, dark);
+            for (var s = -10; s <= 10; s += 4) px(c, s, -2, 1, 1, "#9a8a6a");
+            lx = 13; ly = -5;
+          } else {
+            px(c, 0, -9, 1, 9, dark); px(c, -6, -1, 13, 1, wood); px(c, -5, 0, 11, 1, dark);
+            lx = 0; ly = -11;
+          }
+          var big = tr.hull === 3;
+          if (!tr.lantern) { px(c, lx, ly, 2, 2, "#3a2a1a"); return; }
+          c.fillStyle = "rgba(255,211,107," + (0.18 + glowPulse * 0.12) + ")";
+          c.beginPath(); c.arc(lx + 0.5, ly + 0.5, big ? 9 : 5, 0, 6.29); c.fill();
+          c.fillStyle = "rgba(255,211,107,0.3)";
+          c.beginPath(); c.arc(lx + 0.5, ly + 0.5, big ? 4 : 2.5, 0, 6.29); c.fill();
+          px(c, lx - (big ? 1 : 0), ly - (big ? 1 : 0), big ? 3 : 2, big ? 3 : 2, lamp);
+        }
+
+        function drawBolt(c, tr, alpha) {
+          c.fillStyle = "rgba(255,255,245," + alpha + ")";
+          var y = 0, step = 7;
+          for (var i = 0; i < tr.bolt.length - 1; i++) {
+            var x0 = tr.bolt[i], x1 = tr.bolt[i + 1];
+            for (var j = 0; j < step; j++) c.fillRect(Math.round(x0 + (x1 - x0) * j / step), y + j, 1, 1);
+            y += step;
+          }
+        }
+
+        function render(c, tr, t, wind, flash, boltOn) {
+          var sea = SEAS[tr.sea], eye = tr.sea === 4;
+          c.setTransform(1, 0, 0, 1, 0, 0);
+          var g = c.createLinearGradient(0, 0, 0, H);
+          g.addColorStop(0, sea.sky[0]); g.addColorStop(1, sea.sky[1]);
+          c.fillStyle = g; c.fillRect(0, 0, W, H);
+          if (flash > 0) { c.fillStyle = "rgba(235,240,255," + flash * 0.35 + ")"; c.fillRect(0, 0, W, H); }
+          if (boltOn) drawBolt(c, tr, Math.max(flash, 0.85));
+
+          var w = wind / 10, amp0 = (5 + 13 * w) * tr.strength;
+          var bases = [H * 0.55, H * 0.66, H * 0.78];
+          var boatX = Math.round(W * 0.5), boatY = 0, boatTilt = 0;
+
+          // rain behind front wave
+          var drops = Math.round(40 + 90 * w * tr.strength), drift = 1 + 3 * w;
+          c.fillStyle = sea.rain;
+          for (var i = 0; i < drops; i++) {
+            var rx = (hash(i) * W + t * drift * 20) % W;
+            var ry = (hash(i + 99) * H + t * (60 + 40 * w)) % H;
+            c.globalAlpha = 0.35 + hash(i + 7) * 0.4;
+            c.fillRect(Math.floor(rx), Math.floor(ry), 1, 3);
+            c.fillRect(Math.floor(rx) - 1, Math.floor(ry) + 3, 1, 1);
+          }
+          c.globalAlpha = 1;
+
+          for (var k = 0; k < 3; k++) {
+            var L = tr.layers[k], amp = amp0 * (0.6 + k * 0.25), ts = t * (0.4 + w);
+            var prev = waveY(L, k, -1, ts, amp, bases[k], eye);
+            for (var x = 0; x < W; x++) {
+              var y = Math.round(waveY(L, k, x, ts, amp, bases[k], eye));
+              c.fillStyle = sea.waves[k === 0 ? 2 : k === 1 ? 1 : 0];
+              c.fillRect(x, y, 1, H - y);
+              if (y < bases[k] - amp * 0.35 || (k === 2 && y < prev)) { c.fillStyle = sea.foam; c.globalAlpha = k === 2 ? 0.9 : 0.5; c.fillRect(x, y, 1, 1); c.globalAlpha = 1; }
+              prev = y;
+            }
+            if (k === 1) {
+              boatY = waveY(L, k, boatX, ts, amp, bases[k], eye);
+              boatTilt = Math.atan2(waveY(L, k, boatX + 4, ts, amp, bases[k], eye) - waveY(L, k, boatX - 4, ts, amp, bases[k], eye), 8) * 0.8;
+              c.save();
+              c.translate(boatX, Math.round(boatY) + 1);
+              c.rotate(boatTilt);
+              drawBoat(c, tr, (Math.sin(t * 3) + 1) / 2);
+              c.restore();
+            }
+          }
+          if (eye) {
+            c.fillStyle = "rgba(232,241,255,0.08)";
+            c.beginPath(); c.ellipse(boatX, H * 0.82, 40, 10, 0, 0, 6.29); c.fill();
+          }
+        }
+
+        function pad(n) { return "#" + String(n).padStart(3, "0"); }
+
+        // Storm preview toy
+        var cv = document.getElementById("storm-canvas"), c = cv.getContext("2d");
+        var windEl = document.getElementById("wind"), boltBtn = document.getElementById("lightning");
+        var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var tr, lightningOn = true, flash = 0, boltShow = false, t0 = performance.now();
+
+        function setSeed(n) {
+          tr = traits(n);
+          windEl.value = Math.max(1, Math.round(tr.strength * 10));
+          document.getElementById("seed-no").textContent = pad(n);
+          document.getElementById("seed-hull").textContent = HULLS[tr.hull];
+          document.getElementById("seed-sea").textContent = SEAS[tr.sea].name;
+          cv.setAttribute("aria-label", "Storm preview " + pad(n) + ": a " + HULLS[tr.hull] + " in a " + SEAS[tr.sea].name + " sea");
+          if (reduce) still();
+        }
+        function still() { render(c, tr, 1.3, +windEl.value, 0, lightningOn && tr.boltStatic); }
+
+        document.getElementById("new-seed").addEventListener("click", function () { setSeed(1 + Math.floor(Math.random() * 3333)); });
+        windEl.addEventListener("input", function () { if (reduce) still(); });
+        boltBtn.addEventListener("click", function () {
+          lightningOn = !lightningOn;
+          boltBtn.setAttribute("aria-pressed", String(lightningOn));
+          if (!lightningOn) { flash = 0; boltShow = false; }
+          if (reduce) still();
+        });
+
+        setSeed(1);
+        if (!reduce) {
+          (function frame(now) {
+            var t = (now - t0) / 1000;
+            if (lightningOn && flash <= 0 && Math.random() < 0.004 + 0.003 * (+windEl.value / 10)) {
+              flash = 1; boltShow = true;
+              var r = Math.random; var bx = 20 + r() * (W - 40);
+              tr.bolt = tr.bolt.map(function () { var v = bx; bx += (r() - 0.5) * 14; return v; });
+            }
+            render(c, tr, t, +windEl.value, flash, boltShow && flash > 0.3);
+            flash = Math.max(0, flash - 0.04);
+            requestAnimationFrame(frame);
+          })(performance.now());
+        }
+      })();
+    </script>
+  </body>
+</html>
